@@ -1,8 +1,8 @@
-const express = require("express");
-const videoController = require("../controller/userController");
+const express = require('express')
+const videoController = require('../controller/userController')
 
-const router = express.Router();
+const router = express.Router()
 
-router.get("/lists", videoController.list);
+router.get('/lists', videoController.list)
 
-module.exports = router;
+module.exports = router

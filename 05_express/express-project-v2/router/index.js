@@ -1,10 +1,10 @@
 // 路由中间件
 
-const express = require("express");
+const express = require('express')
 
-const router = express.Router();
+const router = express.Router()
 
-router.use("/video", require("./video"));
-router.use("/user", require("./user"));
+router.use('/user', require('./user'))
+router.use('/video', require('./video'))
 
-module.exports = router;
+module.exports = router
