@@ -6,8 +6,8 @@ const router = express.Router();
 const validator = require("../middleware/validator/userValidator");
 
 router
-	.post("/register", validator.register, userController.register)
-	.get("/list", userController.list)
+	.post("/registers", validator.register, userController.register)
+	.get("/lists", userController.list)
 	.delete("/", userController.delete);
 
 module.exports = router;
