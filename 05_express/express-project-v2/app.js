@@ -1,8 +1,10 @@
 const express = require('express')
 
+// 实现支持跨域请求
 const cors = require('cors')
+// 实现日志记录
 const morgan = require('morgan')
-
+// 实现路由
 const router = require('./router')
 
 const app = express()
@@ -22,5 +24,7 @@ app.use('/api/v1', router)
 const PORT = process.env.PORT || 3000
 
 app.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}`)
+  console.log(
+    `Server is running at http://localhost:${PORT}`
+  )
 })

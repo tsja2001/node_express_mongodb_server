@@ -1,10 +1,11 @@
 // 使用mongoose库连接🥭数据库
 
 const mongoose = require('mongoose')
+const { mongopath } = require('../config/config.default')
 
 // 最后的是数据库名称
 async function main() {
-  await mongoose.connect('mongodb://localhost:27017/rexpress-video')
+  await mongoose.connect(mongopath)
 }
 
 main()

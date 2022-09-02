@@ -12,7 +12,8 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
-    set: (value) => md5(value), // 存储时以md5形式加密
+    // 密码存储时以md5形式加密, 查询时只需传入明文, 会自动加密后查找
+    set: (value) => md5(value),
     select: false // 查询时忽略此条
   },
   phone: {
