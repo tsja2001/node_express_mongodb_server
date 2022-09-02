@@ -1,6 +1,6 @@
 // 用于实现阿里云的身份验证
 var RPCClient = require('@alicloud/pop-core').RPCClient
-const keys = require('../key/vod')
+const keys = require('../keys/vod')
 
 function initVodClient(accessKeyId, accessKeySecret) {
   var regionId = 'cn-shanghai' // 点播服务接入地域
