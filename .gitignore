@@ -2,8 +2,6 @@
 node_modules
 /dist
 
-/resourse
-
 
 # local env files
 .env.local
