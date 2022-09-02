@@ -33,3 +33,17 @@ exports.videolist = async (req, res, next) => {
     res.status(501).json({ err: error })
   }
 }
+
+// 获取video详细数据
+exports.video = async (req, res, next) => {
+  try {
+    const id = req.params.videoId
+    const videoList = await Video.findById(id).populate(
+      'user',
+      '_id username image cover'
+    )
+    res.status(201).json({ videoList })
+  } catch (error) {
+    res.status(501).json({ err: error })
+  }
+}

@@ -23,7 +23,7 @@ router
   // 修改用户信息
   .put(
     '/',
-    verifyToken,
+    verifyToken(),
     validator.update,
     userController.update
   )
@@ -31,16 +31,16 @@ router
   // 会自动调用upload.single上传, 文件名为headimg, 上传成功数据放在req.file
   .post(
     '/headimg',
-    verifyToken,
+    verifyToken(),
     upload.single('headimg'),
     userController.headimg
   )
   .put(
     '/',
-    verifyToken,
+    verifyToken(),
     validator.update,
     userController.update
   )
-  .get('/lists', verifyToken, userController.list)
+  .get('/lists', verifyToken(), userController.list)
 
 module.exports = router

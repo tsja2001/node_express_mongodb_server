@@ -14,15 +14,21 @@ router.get('/getvod', vodController.getvod)
 // 保存视频的vodvideoId到数据库
 router.post(
   '/creatvideo',
-  verifyToken,
+  verifyToken(),
   videoValidator,
   videoController.creatvideo
 )
 // 获取video分页数据
 router.get(
   '/videolist',
-  verifyToken,
+  verifyToken(),
   videoController.videolist
+)
+// 获取video详细数据
+router.get(
+  '/video/:videoId',
+  verifyToken(false),
+  videoController.video
 )
 
 module.exports = router
