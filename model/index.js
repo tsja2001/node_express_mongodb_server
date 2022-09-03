@@ -20,6 +20,10 @@ main()
 module.exports = {
   User: mongoose.model('User', require('./userModel')),
   Video: mongoose.model('Video', require('./videoModel')),
+  Videocomment: mongoose.model(
+    'Videocomment',
+    require('./videocommentModel')
+  ),
   Subscribe: mongoose.model(
     'Subscribe',
     require('./subscribeModel')

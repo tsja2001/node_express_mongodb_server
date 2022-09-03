@@ -1,4 +1,4 @@
-const { Video } = require('../model')
+const { Video, Videocomment } = require('../model')
 
 // 保存视频的vodvideoId到数据库
 exports.creatvideo = async (req, res, next) => {
@@ -45,5 +45,47 @@ exports.video = async (req, res, next) => {
     res.status(201).json({ videoList })
   } catch (error) {
     res.status(501).json({ err: error })
+  }
+}
+
+// 根据视频id添加评论
+exports.comment = async (req, res, next) => {
+  const { videoId } = req.params
+  const { comment } = req.body
+
+  //  先查找有没有这个视频
+  let videoInfo = null
+
+  try {
+    videoInfo = await Video.findById(videoId)
+    if (!videoInfo) {
+      res.status(401).json({ error: '暂无视频数据' })
+      return
+    }
+  } catch (error) {
+    res.status(500).json(error)
+    return
+  }
+
+  // 将评论添加到视频评论表中
+  try {
+    await new Videocomment({
+      content: comment,
+      video: videoId,
+      user: req.user.userinfo._id
+    }).save()
+  } catch (error) {
+    res.status(500).json(error)
+    return
+  }
+
+  // 原视频的评论数 + 1
+  try {
+    videoInfo.commentCount++
+    await Video.findByIdAndUpdate(videoInfo._id, videoInfo)
+    res.status(200).json({ success: '成功' })
+  } catch (error) {
+    console.log(error)
+    res.status(404).json({ error: 视频不存在 })
   }
 }

@@ -23,6 +23,11 @@ const videoSchema = new mongoose.Schema({
     type: String,
     required: false
   },
+  // 评价数量
+  commentCount: {
+    type: Number,
+    default: 0
+  },
   ...baseModel
 })
 
