@@ -54,6 +54,12 @@ router
     verifyToken(),
     userController.unsubscribe
   )
-  .get('/lists', verifyToken(), userController.list)
+  // 查询用户频道
+  .get(
+    '/getuser/:userId',
+    verifyToken(),
+    userController.getuser
+  )
+  .get('/lists', verifyToken(false), userController.list)
 
 module.exports = router

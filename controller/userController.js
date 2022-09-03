@@ -4,6 +4,7 @@ const { createToken } = require('../util/jwt')
 const fs = require('fs')
 const { promisify } = require('util')
 const rename = promisify(fs.rename)
+const loadsh = require('loadsh')
 
 // 注册
 exports.register = async (req, res, next) => {
@@ -212,6 +213,51 @@ exports.unsubscribe = async (req, res, next) => {
     } catch (error) {
       res.status(403).json({ error: error })
     }
+  }
+}
+
+// 查询用户频道
+exports.getuser = async (req, res, next) => {
+  const targetUserId = req.params.userId
+  try {
+    // 查询用户频道信息
+    const dbBack = await User.findById(targetUserId)
+
+    // 如果已登陆, 查询当前用户和目标用户的关注关系
+    const currentUserId = req.user.userinfo._id
+
+    let ifFollower = false
+    let ifBeFollowered = false
+    if (currentUserId) {
+      // 是否关注了他
+      const followerBack = await Subscribe.findOne({
+        user: currentUserId,
+        channel: targetUserId
+      })
+      if (followerBack) ifFollower = true
+
+      // 是否被关注了
+      const beFollowered = await Subscribe.findOne({
+        user: targetUserId,
+        channel: currentUserId
+      })
+      if (beFollowered) ifBeFollowered = true
+    }
+
+    res.status(201).json({
+      ...loadsh.pick(dbBack, [
+        '_id',
+        'username',
+        'image',
+        'cover',
+        'subscribeCount'
+      ]),
+      ifFollower,
+      ifBeFollowered
+    })
+  } catch (error) {
+    console.log(error)
+    res.status(403).json({ error: error })
   }
 }
 
