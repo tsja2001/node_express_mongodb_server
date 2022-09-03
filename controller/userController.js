@@ -5,9 +5,16 @@ const fs = require('fs')
 const { promisify } = require('util')
 const rename = promisify(fs.rename)
 const loadsh = require('loadsh')
+const { uuid } = require('../config/config.default')
 
+const {
+  ResultWithContext
+} = require('express-validator/src/chain')
+const { userDataMasking } = require('../util/dataMasking')
+const jwt = require('jsonwebtoken')
+const verify = promisify(jwt.verify)
 // 注册
-exports.register = async (req, res, next) => {
+exports.register = async (req, res) => {
   // 拿到数据库中User集合, 传入注册的数据
   const userModel = new User(req.body)
   // 给数据库的User集合写入用户数据
@@ -20,7 +27,7 @@ exports.register = async (req, res, next) => {
 }
 
 // 登陆
-exports.login = async (req, res, next) => {
+exports.login = async (req, res) => {
   const { email, password } = req.body
   // 查找此邮箱和密码
   let dbBack = await User.findOne({ email, password })
@@ -39,7 +46,7 @@ exports.login = async (req, res, next) => {
 }
 
 // 修改用户信息
-exports.update = async (req, res, next) => {
+exports.update = async (req, res) => {
   const _id = req.user.userinfo._id
   // 默认返回修改前结果, 传入第三个参数{new: true}会返回修改后的结果
   const dbBack = await User.findByIdAndUpdate(
@@ -60,7 +67,7 @@ exports.update = async (req, res, next) => {
 }
 
 // 更改用户头像
-exports.headimg = async (req, res, next) => {
+exports.headimg = async (req, res) => {
   /**
    * multer库上传文件后写入req.file的数据:
    * 此时filename没有后缀名, 无法正常读取, 需要加上后缀
@@ -95,7 +102,7 @@ exports.headimg = async (req, res, next) => {
 }
 
 // 订阅用户
-exports.subscribe = async (req, res, next) => {
+exports.subscribe = async (req, res) => {
   // 要订阅的用户
   const targetUserId = req.params.userId
   // 当前用户
@@ -156,8 +163,9 @@ exports.subscribe = async (req, res, next) => {
     }
   }
 }
+
 // 取消订阅用户
-exports.unsubscribe = async (req, res, next) => {
+exports.unsubscribe = async (req, res) => {
   const targetUserId = req.params.userId
   const currentUserId = req.user.userinfo._id
 
@@ -217,12 +225,11 @@ exports.unsubscribe = async (req, res, next) => {
 }
 
 // 查询用户频道
-exports.getuser = async (req, res, next) => {
+exports.getuser = async (req, res) => {
   const targetUserId = req.params.userId
   try {
     // 查询用户频道信息
     const dbBack = await User.findById(targetUserId)
-
     // 如果已登陆, 查询当前用户和目标用户的关注关系
     const currentUserId = req.user.userinfo._id
 
@@ -244,33 +251,137 @@ exports.getuser = async (req, res, next) => {
       if (beFollowered) ifBeFollowered = true
     }
 
-    res.status(201).json({
-      ...loadsh.pick(dbBack, [
-        '_id',
-        'username',
-        'image',
-        'cover',
-        'subscribeCount'
-      ]),
-      ifFollower,
-      ifBeFollowered
-    })
+    const resData = {
+      ifFollower: ifFollower,
+      ifBeFollowered: ifBeFollowered,
+      ...userDataMasking(dbBack)
+    }
+
+    res.status(200).json(resData)
   } catch (error) {
     console.log(error)
-    res.status(403).json({ error: error })
+    res.status(403).json(error)
   }
 }
 
-exports.list = async (req, res, next) => {
-  console.log(req.method)
+// 查询用户token
+exports.token = async (req, res) => {
+  const userId = req.params.userId
+
   try {
-    res.json('/user-list')
-  } catch (e) {
-    console.log(e)
+    let userInfo = await User.findById(userId)
+    userInfo = userInfo.toJSON()
+
+    // 用查到的用户数据JSON生成token, 并放在userInfo上返回
+    const token = await createToken(userInfo)
+    res.status(200).json({ token })
+  } catch (err) {
+    res.status(501).json({ error: err })
   }
 }
 
-exports.delete = async (req, res, next) => {
-  console.log(req.method)
-  res.send('/user-list')
+// 根据token获取用户数据
+exports.getUserinfoByToken = async (req, res) => {
+  let token = req.params.token
+
+  try {
+    // 如果token以brarer来头
+    const tokenArr = token.split('Bearer ')
+    if (tokenArr.length > 1) {
+      token = tokenArr[1]
+    }
+
+    const userInfo = await verify(token, uuid)
+
+    res.status(200).json(userInfo)
+  } catch (err) {
+    res.status(501).json({ error: err })
+  }
+}
+
+// 查询用户列表
+exports.list = async (req, res) => {
+  const { username, email, phone, channeldes } = req.body
+
+  try {
+    const query = {}
+    if (username) {
+      query.username = username
+    }
+    if (email) {
+      query.email = email
+    }
+    if (phone) {
+      query.phone = phone
+    }
+    if (channeldes) {
+      query.channeldes = channeldes
+    }
+
+    const dbBack = await User.find({
+      ...query
+    })
+
+    res.status(200).json(dbBack)
+  } catch (err) {
+    res.status(501).json({ error: err })
+  }
+}
+
+// 查看关注列表
+exports.getsubscribe = async (req, res) => {
+  const { pageNum = 0, pageSize = 10 } = req.body
+  const id = req.user.userinfo._id
+
+  try {
+    const dbBack = await Subscribe.find({
+      user: id
+    })
+      .skip((pageNum - 1) * pageSize)
+      .limit(pageSize)
+      .sort({ createAt: -1 })
+      .populate('channel')
+
+    const totalCount = await Subscribe.countDocuments({
+      user: id
+    })
+
+    const list = dbBack.map((item) => {
+      return userDataMasking(item.channel)
+    })
+
+    res.status(201).json({ list, totalCount })
+
+    // res.status(201).json(dbBack)
+  } catch (err) {
+    res.status(501).json({ error: err })
+  }
+}
+
+// 查看粉丝列表
+exports.getchannel = async (req, res) => {
+  const id = req.user.userinfo._id
+
+  try {
+    const { pageNum = 0, pageSize = 10 } = req.body
+    const dbBack = await Subscribe.find({
+      channel: id
+    })
+      .skip((pageNum - 1) * pageSize)
+      .limit(pageSize)
+      .sort({ createAt: -1 })
+      .populate('user')
+
+    const totalCount = await Subscribe.countDocuments({
+      channel: id
+    })
+
+    const list = dbBack.map((item) => {
+      return userDataMasking(item.user)
+    })
+
+    res.status(201).json({ list, totalCount })
+  } catch (err) {
+    res.status(501).json({ error: err })
+  }
 }

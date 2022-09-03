@@ -18,8 +18,10 @@ router
     validator.register,
     userController.register
   )
+
   // 登陆
   .post('/logins', validator.login, userController.login)
+
   // 修改用户信息
   .put(
     '/',
@@ -27,6 +29,7 @@ router
     validator.update,
     userController.update
   )
+
   // 更改用户头像
   // 会自动调用upload.single上传, 文件名为headimg, 上传成功数据放在req.file
   .post(
@@ -35,6 +38,7 @@ router
     upload.single('headimg'),
     userController.headimg
   )
+
   // 修改用户信息
   .put(
     '/',
@@ -42,24 +46,52 @@ router
     validator.update,
     userController.update
   )
+
   // 订阅用户
   .get(
     '/subscribe/:userId',
     verifyToken(),
     userController.subscribe
   )
+
   // 取消订阅用户
   .get(
     '/unsubscribe/:userId',
     verifyToken(),
     userController.unsubscribe
   )
+
   // 查询用户频道
   .get(
     '/getuser/:userId',
     verifyToken(),
     userController.getuser
   )
-  .get('/lists', verifyToken(false), userController.list)
+
+  // 根据用户id获取token
+  .get('/token/:userId', userController.token)
+
+  // 根据token获取用户数据
+  .get(
+    '/getUserinfoByToken/:token',
+    userController.getUserinfoByToken
+  )
+
+  // 查询用户列表
+  .get('/lists', userController.list)
+
+  // 查询用户关注列表
+  .get(
+    '/getsubscribe',
+    verifyToken(),
+    userController.getsubscribe
+  )
+
+  // 查询用户粉丝列表
+  .get(
+    '/getchannel',
+    verifyToken(),
+    userController.getchannel
+  )
 
 module.exports = router
