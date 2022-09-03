@@ -35,6 +35,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  // 粉丝数
+  subscribeCount: {
+    type: Number,
+    default: 0
+  },
+  // 关注数
+  followCount: {
+    type: Number,
+    default: 0
+  },
   ...baseModel
 })
 

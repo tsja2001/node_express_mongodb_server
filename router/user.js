@@ -35,11 +35,24 @@ router
     upload.single('headimg'),
     userController.headimg
   )
+  // 修改用户信息
   .put(
     '/',
     verifyToken(),
     validator.update,
     userController.update
+  )
+  // 订阅用户
+  .get(
+    '/subscribe/:userId',
+    verifyToken(),
+    userController.subscribe
+  )
+  // 取消订阅用户
+  .get(
+    '/unsubscribe/:userId',
+    verifyToken(),
+    userController.unsubscribe
   )
   .get('/lists', verifyToken(), userController.list)
 

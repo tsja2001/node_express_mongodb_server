@@ -1,5 +1,5 @@
 // 引入数据库集合
-const { User } = require('../model')
+const { User, Subscribe } = require('../model')
 const { createToken } = require('../util/jwt')
 const fs = require('fs')
 const { promisify } = require('util')
@@ -90,6 +90,128 @@ exports.headimg = async (req, res, next) => {
     res.status(201).send(fileRealName)
   } catch (error) {
     res.status(500).json({ error: error })
+  }
+}
+
+// 订阅用户
+exports.subscribe = async (req, res, next) => {
+  // 要订阅的用户
+  const targetUserId = req.params.userId
+  // 当前用户
+  const currentUserId = req.user.userinfo._id
+
+  // 当关注自己时
+  if (targetUserId === currentUserId) {
+    res.status(403).json({ error: '不能关注自己' })
+    return
+  }
+
+  // 关注别人时, 查询是否已经关注
+  const dbBack = await Subscribe.findOne({
+    user: currentUserId,
+    channel: targetUserId
+  })
+
+  if (dbBack) {
+    // 已经关注
+    res.status(403).json({ error: '不能重复关注' })
+    return
+  } else {
+    try {
+      // 未关注, 保存关注信息
+      await new Subscribe({
+        user: currentUserId,
+        channel: targetUserId
+      }).save()
+
+      // 本人关注数 + 1
+      const currentUserData = await User.findById(
+        currentUserId
+      )
+      currentUserData.followCount++
+
+      await User.findByIdAndUpdate(
+        currentUserId,
+        currentUserData
+      )
+
+      // 对方粉丝数 + 1
+      const targetUserData = await User.findById(
+        targetUserId
+      )
+      targetUserData.subscribeCount++
+      console.log(
+        'subscribeCount:' + targetUserData.subscribeCount
+      )
+      await User.findByIdAndUpdate(
+        targetUserId,
+        targetUserData
+      )
+
+      res.status(201).json({ success: '关注成功' })
+      return
+    } catch (error) {
+      res.status(403).json({ error: error })
+    }
+  }
+}
+// 取消订阅用户
+exports.unsubscribe = async (req, res, next) => {
+  const targetUserId = req.params.userId
+  const currentUserId = req.user.userinfo._id
+
+  // 当关注自己时
+  if (targetUserId === currentUserId) {
+    res.status(403).json({ error: '不能取消关注自己' })
+    return
+  }
+
+  // 关注别人时, 查询是否已经关注
+  const dbBack = await Subscribe.findOne({
+    user: currentUserId,
+    channel: targetUserId
+  })
+
+  if (!dbBack) {
+    // 没有关注
+    res.status(403).json({ error: '不能重复取消关注' })
+    return
+  } else {
+    try {
+      // 已关注, 删除关注信息
+      await dbBack.remove()
+
+      // 本人关注数 - 1
+      const currentUserData = await User.findById(
+        currentUserId
+      )
+      currentUserData.followCount--
+      console.log(
+        'followCount:' + currentUserData.followCount
+      )
+      await User.findByIdAndUpdate(
+        currentUserId,
+        currentUserData
+      )
+
+      // 对方粉丝数 - 1
+      const targetUserData = await User.findById(
+        targetUserId
+      )
+      targetUserData.subscribeCount--
+      console.log(
+        'subscribeCount:' + targetUserData.subscribeCount
+      )
+      await User.findByIdAndUpdate(
+        targetUserId,
+        targetUserData
+      )
+
+      res.status(201).json({ success: '取消关注成功' })
+      return
+    } catch (error) {
+      res.status(403).json({ error: error })
+    }
   }
 }
 
