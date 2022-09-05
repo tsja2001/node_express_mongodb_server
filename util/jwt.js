@@ -23,11 +23,11 @@ module.exports.verifyToken = (required = true) => {
         const userInfo = await verify(token, uuid)
 
         req.user = userInfo
-        // next()
+        next()
       } catch {
         res.status(403).json({ error: '无效token' })
       }
-      next()
+      // next()
     } else if (required) {
       res.status(403).json({ error: '请传入token' })
     } else {

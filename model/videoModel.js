@@ -28,6 +28,16 @@ const videoSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  // 喜欢数量
+  like: {
+    type: Number,
+    default: 0
+  },
+  // 不喜欢数量
+  dislike: {
+    type: Number,
+    default: 0
+  },
   ...baseModel
 })
 

@@ -45,10 +45,17 @@ router
   )
   // 查询视频评论分页
   .get('/commentlist/:videoId', videoController.commentlist)
+  // 喜欢视频
+  .get(
+    '/like/:videoId',
+    verifyToken(),
+    videoController.likeVideo
+  )
+  // 不喜欢视频
+  .get(
+    '/dislike/:videoId',
+    verifyToken(),
+    videoController.dislikeVideo
+  )
 
 module.exports = router
-
-////////////////////////////////////////////////////////////////
-
-////////////////////////////////
-// 9:14
