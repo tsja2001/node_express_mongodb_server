@@ -89,3 +89,68 @@ exports.comment = async (req, res, next) => {
     res.status(404).json({ error: 视频不存在 })
   }
 }
+
+// 删除视频评论
+exports.deleteComment = async (req, res) => {
+  const { videoId, commentId } = req.params
+  try {
+    // 验证存在此视频
+    const videoDbBack = await Video.findById(videoId)
+    if (!videoDbBack) {
+      res.status(403).json({ error: '无此视频' })
+      return
+    }
+
+    // 验证存在此评论
+    const commentDbback = await Videocomment.findById(
+      commentId
+    )
+    if (!commentDbback) {
+      res.status(403).json({ error: '无此评论' })
+      return
+    }
+
+    // 验证此评论为当前用户发表
+    const id = req.user.userinfo._id
+    if (!commentDbback.user.equals(id)) {
+      res.status(403).json({ error: '暂无权限' })
+      return
+    }
+
+    // 执行删除操作
+    await commentDbback.remove()
+    // // 视频评论 - 1
+    videoDbBack.commentCount--
+    await videoDbBack.save()
+
+    res.status(200).json({ success: '操作成功' })
+    // res.json(commentId)
+  } catch (error) {
+    res.status(403).json(error)
+  }
+}
+
+// 获取video分页数据
+exports.commentlist = async (req, res) => {
+  // 保存数据
+  try {
+    const { pageNum = 0, pageSize = 10 } = req.body
+    const videoId = req.params.videoId
+
+    const commentList = await Videocomment.find({
+      video: videoId
+    })
+      .skip((pageNum - 1) * pageSize)
+      .limit(pageSize)
+      .sort({ createAt: -1 })
+      .populate('user', 'id username image')
+
+    const videoTotalCount =
+      await Videocomment.countDocuments({
+        video: videoId
+      })
+    res.status(201).json({ commentList, videoTotalCount })
+  } catch (error) {
+    res.status(501).json({ err: error })
+  }
+}

@@ -37,5 +37,18 @@ router
     verifyToken(),
     videoController.comment
   )
+  // 删除视频评论
+  .delete(
+    '/comment/:videoId/:commentId',
+    verifyToken(),
+    videoController.deleteComment
+  )
+  // 查询视频评论分页
+  .get('/commentlist/:videoId', videoController.commentlist)
 
 module.exports = router
+
+////////////////////////////////////////////////////////////////
+
+////////////////////////////////
+// 9:14
